@@ -34,7 +34,7 @@ Winner: highest score; tie: draw.
 
 Clone repo:
 
-git clone https://github.com/yourusername/flip-match-magic.git
+git clone  https://nunna-himabindu.github.io/memorygame/
 
 
 Open index.html in a browser.
