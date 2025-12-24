@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Flip & Match — Magic Duel</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1: #071226;
+    --card-back: rgba(255,255,255,0.06);
+    --glass: rgba(255,255,255,0.06);
+    --player1: #ff6b6b;
+    --player2: #4d9cff;
+    --gold: #e6b800;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:'Crimson Pro';,serif ;font-size:15px;
+  overflow-y: auto;  /* vertical scroll */
+    overflow-x: hidden; /* prevent horizontal scroll */
+  animation: changeBG1 15s infinite;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+   color:#fff}
+   
+   @keyframes changeBG1 {
+    0%   { background-image: url("images/photo2.png");}
+    33%  { background-image: url("images/photo5.jpg"); }
+    66%  { background-image: url("images/photo2.png"); }
+    100% { background-image: url("images/photo5.jpg"); }
+}
+
+  /* floating magic particles */
+  .particle { position: absolute; width:6px; height:6px; border-radius:50%; background: linear-gradient(90deg,#ffd86b,#ffd86b00); filter: blur(1px); opacity:.85; pointer-events:none }
+
+  /*.game-wrap{
+    width:980px;
+    max-width:100%;
+    margin-left:200px;
+    margin-top:50px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:14px;
+    padding:18px;
+    display:grid;
+    grid-template-columns: 260px 1fr;
+    gap:18px;
+    box-shadow: 0px 20px 60px rgba(0,0,0,0.6);
+    align-items:start;
+    backdrop-filter: blur(1px);
+    position:relative;
+  }
+
+  /* SIDEBAR 
+  .sidebar{
+    padding:14px;
+    border-radius:10px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+    color:#efe6c7;
+    min-height:240px;
+    position:relative;
+    overflow:visible;
+  }*/
+  .outer-center {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.game-wrap{
+    width:980px;
+    max-width:100%;
+    margin-top:50px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:14px;
+    padding:18px;
+
+    display:flex;
+    gap:18px;
+    flex-wrap:nowrap;
+
+    box-shadow: 0px 20px 60px rgba(0,0,0,0.6);
+    align-items:flex-start;     
+    backdrop-filter: blur(1px);
+    position:relative;
+}
+
+/* Sidebar resizes with screen */
+.sidebar{
+    padding:14px;
+    border-radius:10px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+    color:#efe6c7;
+    min-height:240px;
+
+    flex:1;                      
+    max-width:260px;             
+    min-width:160px;             
+    position:relative;
+    overflow:visible;
+}
+  
+
+/* Main area takes remaining space */
+.main-content{
+    flex:2;                      /* bigger compared to sidebar */
+    min-width:0;
+}
+
+
+  .title{font-size:20px;margin:0 0 8px 0;color:var(--gold);font-family:'Cinzel',serif}
+  .playerRow{display:flex;gap:12px;align-items:center;margin-bottom:12px;color:black}
+  .chip{width:44px;height:44px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:20px}
+  .score{margin:6px 0;font-weight:600;color:black;font-size:19px}
+  .turn-indicator{margin-top:8px;padding:8px;border-radius:8px;background:var(--glass);font-weight:600;color:black;font-size:22px}
+
+  /* crest & wand */
+  .crest{
+    width:44px;height:44px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(180deg,rgba(255,255,255,0.04),transparent);box-shadow:0 6px 20px rgba(0,0,0,0.35)
+  }
+  .wand {
+    width:12px;height:12px;border-radius:50%;
+    background: radial-gradient(circle,#fff,#ffd86b); box-shadow:0 0 10px black;
+    margin-left:8px; animation: wandPulse 1.5s infinite ease-in-out;
+  }
+  @keyframes wandPulse{
+    0%{ transform: scale(.9); opacity:.8 }
+    50%{ transform: scale(1.25); opacity:1 }
+    100%{ transform: scale(.9); opacity:.8 }
+  }
+
+  /* BOARD */
+  .board-wrap{width:100%}
+
+.board {
+    display: grid;
+    gap: 12px;
+
+    /* FIX: Always 6 columns, no wrapping */
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+
+    justify-items: stretch;
+    padding: 8px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+    border-radius: 10px;
+    box-shadow: 0px 10px 40px black;
+}
+
+/* CARD */
+.card{
+    width:100%;
+    aspect-ratio: 1 / 1;
+    perspective:900px;
+}
+
+/* RESPONSIVE: Reduce board columns on small screens */
+@media (max-width:900px){
+    .board { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width:520px){
+    .board { grid-template-columns: repeat(3, 1fr); gap:8px; }
+}
+  
+  .cardInner{
+    position:relative;
+    width:100%;
+    height:100%;
+    border-radius:12px;
+    transform-style:preserve-3d;
+    transition: transform 0.55s cubic-bezier(.2,.9,.3,1);
+    cursor:pointer;
+    border:2px solid rgba(0,0,0,0.35);
+    box-shadow: 0 6px 18px black;
+    background:var(--card-back);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+  }
+  .cardInner.flipped{ transform: rotateY(180deg); }
+  .cardFace{
+    position:absolute;
+    inset:0;
+    /* GRID inside card back/front could be used; we will use center text */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:12px;
+    backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+    font-weight:700;
+  }
+  .faceFront{
+    background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.02));
+    font-size:26px;
+    color:#fff;
+  }
+  .faceBack{
+    transform: rotateY(180deg);
+    background: #fff;
+    font-size:46px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .cardInner.matched{
+    transform:none !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    cursor:default;
+    border-color: transparent;
+  }
+  .disabled{ pointer-events:none; opacity:0.96 }
+  .love{
+      opacity:.85;font-size:17px;margin-top:10px;color:black;
+  }
+  .love2{
+    width:100%;box-shadow:0px 0px 17px black;
+  
+  }
+  
+  .magic-btn {
+    position: relative;
+    padding: 12px 26px;
+    border-radius: 12px;
+    color: #f5e8c9;
+    background: #1a1411;
+    border: 1px solid #c7a368;
+    cursor: pointer;
+    overflow: hidden;
+    transition: 0.3s ease;
+    font-size: 18px;
+}
+
+/* ---------------- HOVER EFFECT ---------------- */
+.magic-btn:hover {
+    box-shadow: 0 0 20px black,
+                0 0 35px dodgerblue;
+    transform: translateY(-3px);
+}
+
+/* Golden shimmer sweep */
+.magic-btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg,
+        transparent 0%,
+        rgba(255,220,150,0.35) 50%,
+        transparent 100%
+    );
+    transform: translateX(-100%);
+    transition: 0.5s ease;
+}
+
+.magic-btn:hover::before {
+    transform: translateX(100%);
+}
+
+/* ---------------- CLICK EFFECT ---------------- */
+.magic-btn:active {
+    transform: scale(0.92);
+    box-shadow: 0 0 30px rgba(255,250,200,0.9),
+                0 0 60px rgba(255,200,150,0.6);
+}
+
+/* Big sparkle burst */
+.magic-btn::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 220px;
+    height: 220px;
+    transform: translate(-50%, -50%) scale(0);
+    background: radial-gradient(circle, #ffe9ac 0%, transparent 70%);
+    border-radius: 50%;
+    opacity: 0;
+    transition: 0.35s ease;
+    pointer-events: none;
+}
+
+/* When pressed: sparkle appears */
+.magic-btn:active::after {
+    transform: translate(-50%, -50%) scale(1.4);
+    opacity: 1;
+}
+
+  
+
+
+  /* modal */
+  .modal{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:40; visibility:hidden; opacity:0; transition:.2s }
+  .modal.show{ visibility:visible; opacity:1 }
+  .modalCard{ background:linear-gradient(180deg,#fff,#f9f6ec); color:#111; padding:28px 32px; border-radius:14px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.25); min-width:260px; }
+
+  .btn{ display:inline-block; padding:10px 16px; border-radius:10px; cursor:pointer; border:none; font-weight:700; margin-top:12px; }
+  .btn.primary{ background:#06b6d4; color:white }
+  .btn.ghost{ background:transparent; color:#333; border:1px solid #ddd }
+
+  @media (max-width:900px){
+    .game-wrap{ grid-template-columns: 1fr; padding:12px }
+    .board{ grid-template-columns: repeat(4,1fr) }
+  }
+  @media (max-width:520px){
+    .board{ grid-template-columns: repeat(3,1fr); gap:8px }
+  }
+  @media (prefers-color-scheme:dark){
+    body{
+    animation: changeBG1 15s infinite;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+   
+  }
+  .game-wrap{
+      backdrop-filter: blur(3px);
+  }
+   .love{
+      opacity:.85;font-size:16px;margin-top:10px;color:bisque;
+  }
+  .love2{
+    width:100%;box-shadow:0px 0px 17px bisque;color:white;
+  
+  }
+  .magic-btn:hover {
+    box-shadow: 0 0 20px rgba(255,220,150,0.7),
+                0 0 35px rgba(255,190,120,0.4);
+    transform: translateY(-3px);
+}
+
+  /* MAIN BACKGROUND SLIDESHOW */
+@keyframes changeBG1 {
+    0%   { background-image: url("images/photo4.png");}
+    33%  { background-image: url("images/photo1.jpg"); }
+    66%  { background-image: url("images/photo4.png"); }
+    100% { background-image: url("images/photo1.jpg"); }
+}
+
+  /* small dashboard text */
+  .small{ font-size:13px; opacity:.92 }
+</style>
+</head>
+<body>
+
+<!-- particles -->
+<script>
+(function(){
+  for(let i=0;i<80;i++){
+    const el = document.createElement('div');
+    el.className='particle';
+    el.style.left = Math.random()*100 + 'vw';
+    el.style.top = Math.random()*100 + 'vh';
+    el.style.width = el.style.height = (Math.random()*3 + 2) + 'px';
+    el.style.opacity = (Math.random()*0.8 + 0.3).toString();
+    document.body.appendChild(el);
+    el.animate([
+      { transform:'translateY(0px) scale(1)', opacity: el.style.opacity },
+      { transform:`translateY(${-(500 + Math.random()*800)}px) scale(.2)`, opacity: 0 }
+    ], { duration: 7000 + Math.random()*8000, iterations: Infinity, delay: Math.random()*4000 });
+  }
+})();
+</script>
+<div class="outer-center">
+<div class="game-wrap" role="application" aria-label="Flip Match Game">
+  <aside class="sidebar" aria-hidden="false">
+    <h1 class="title">Flip & Match — Duel</h1>
+
+    <!-- PLAYER 1 -->
+    <div class="playerRow">
+      <div class="crest" id="crest1">🦁</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;color:black;font-size:22px">
+          <strong id="player1NameBox">Player 1</strong>
+          <div class="wand" id="wand1" title="Wand sparkle"></div>
+        </div>
+        <div class="small" id="player1CharBox" style="color:black;">Wizard</div>
+      </div>
+    </div>
+    <div class="score" id="score1">Score: 0</div>
+
+    <!-- PLAYER 2 -->
+    <div style="margin-top:10px" class="playerRow">
+      <div class="crest" id="crest2">🐍</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;font-size:22px">
+          <strong id="player2NameBox">Player 2</strong>
+          <div class="wand" id="wand2" title="Wand sparkle"></div>
+        </div>
+        <div class="small" id="player2CharBox" style="color:black;">Wizard</div>
+      </div>
+    </div>
+    <div class="score" id="score2">Score: 0</div>
+
+    <div class="turn-indicator" id="turnIndicator">Turn: Player 1</div>
+
+    <div style="margin-top:12px;">
+      <button id="resetBtn" class="btn ghost love2 magic-btn"><p class="love">Restart Game</p></button>
+    </div>
+    <p class="love">Match pairs of identical emojis. Matched cards lock and show the player's color.</p>
+  </aside>
+
+  <main class="board-wrap">
+    <div class="board" id="board" aria-live="polite" aria-atomic="true"></div>
+  </main>
+</div>
+</div>
+
+<!-- modal -->
+<div class="modal" id="modal">
+  <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle">You finished!</h2>
+    <p id="modalMsg" style="margin:6px 0 12px 0;font-weight:600"></p>
+    <div>
+      <button id="playAgain" class="btn primary">Play Again</button>
+      <button id="closeModal" class="btn ghost">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* -------------------------
+   House detection (Option A)
+   ------------------------- */
+function detectHouse(name, character){
+  // lower-case checks
+  const ch = (character||'').toLowerCase();
+  const nm = (name||'').toLowerCase();
+
+  const gry = ['harry','hermione','ron','weasley','granger'];
+  const sly = ['draco','malfoy','snape','voldemort','black'];
+  const rav = ['luna','lockhart','rowena','ravenclaw','cho'];
+  const huf = ['cedric','hufflepuff','newt','diggory'];
+
+  function containsAny(str, arr){ return arr.some(a => str.includes(a)); }
+
+  if(containsAny(ch, gry) || containsAny(nm, gry)) return 'Gryffindor';
+  if(containsAny(ch, sly) || containsAny(nm, sly)) return 'Slytherin';
+  if(containsAny(ch, rav) || containsAny(nm, rav)) return 'Ravenclaw';
+  if(containsAny(ch, huf) || containsAny(nm, huf)) return 'Hufflepuff';
+  // fallback random
+  const houses = ['Gryffindor','Slytherin','Ravenclaw','Hufflepuff'];
+  return houses[Math.floor(Math.random()*houses.length)];
+}
+
+function houseEmoji(house){
+  if(house==='Gryffindor') return '🦁';
+  if(house==='Slytherin') return '🐍';
+  if(house==='Ravenclaw') return '🦅';
+  return '🦡';
+}
+function houseColor(house){
+  if(house==='Gryffindor') return 'linear-gradient(180deg,#8f1a1a,#ffb07a)';
+  if(house==='Slytherin') return 'linear-gradient(180deg,#0b4d0b,#7fe08a)';
+  if(house==='Ravenclaw') return 'linear-gradient(180deg,#213a7a,#7fa3ff)';
+  return 'linear-gradient(180deg,#674b1d,#d9b98a)';
+}
+
+/* -------------------------
+   Read query params
+   ------------------------- */
+function getQueryData() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        p1: params.get("p1") || "Player 1",
+        r1: params.get("r1") || "Wizard",
+        p2: params.get("p2") || "Player 2",
+        r2: params.get("r2") || "Wizard"
+    };
+}
+
+const pdata = getQueryData();
+
+/* -------------------------
+   Update sidebar UI
+   ------------------------- */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('player1NameBox').innerText = pdata.p1;
+  document.getElementById('player1CharBox').innerText = pdata.r1;
+  document.getElementById('player2NameBox').innerText = pdata.p2;
+  document.getElementById('player2CharBox').innerText = pdata.r2;
+
+  const h1 = detectHouse(pdata.p1, pdata.r1);
+  const h2 = detectHouse(pdata.p2, pdata.r2);
+
+  document.getElementById('crest1').innerText = houseEmoji(h1);
+  document.getElementById('crest2').innerText = houseEmoji(h2);
+
+  document.getElementById('crest1').style.background = houseColor(h1);
+  document.getElementById('crest2').style.background = houseColor(h2);
+
+  // subtle text color change
+  document.getElementById('player1NameBox').style.color = '#fff';
+  document.getElementById('player2NameBox').style.color = '#fff';
+});
+
+/* -------------------------
+   Sound effects (WebAudio)
+   ------------------------- */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function beep(freq, time=0.08, type='sine', gain=0.12){
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.value = gain;
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start();
+  o.stop(audioCtx.currentTime + time);
+}
+
+function playFlip(){ beep(880,0.06,'sine',0.06); }
+function playMatch(){ beep(520,0.18,'sawtooth',0.08); setTimeout(()=>beep(780,0.12,'sine',0.05),120); }
+function playWin(){ beep(640,0.2,'sine',0.12); setTimeout(()=>beep(820,0.25,'sine',0.12),200); }
+
+/* -------------------------
+   Game logic (your original code, slightly adapted)
+   ------------------------- */
+(() => {
+  const EMOJIS= [
+  "🧙‍♂️","😎","🪄","✨","🔮","📜","🧪","🧹","🦉","🐉","🌙","⚡"
+  ];
+
+  const board = document.getElementById('board');
+  const score1El = document.getElementById('score1');
+  const score2El = document.getElementById('score2');
+  const turnIndicator = document.getElementById('turnIndicator');
+  const modal = document.getElementById('modal');
+  const modalMsg = document.getElementById('modalMsg');
+  const playAgain = document.getElementById('playAgain');
+  const closeModal = document.getElementById('closeModal');
+  const resetBtn = document.getElementById('resetBtn');
+
+  let deck = [];
+  let flipped = [];
+  let lock = false;
+  let playerTurn = 1;
+  let score1 = 0;
+  let score2 = 0;
+  let matchedPairs = 0;
+
+  function makeDeck(){
+    const arr = EMOJIS.concat(EMOJIS);
+    for(let i = arr.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function renderBoard(){
+    board.innerHTML = '';
+    deck = makeDeck();
+    matchedPairs = 0;
+    flipped = [];
+    lock = false;
+    updateTurnUI();
+
+    deck.forEach((val, idx) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.setAttribute('data-idx', idx);
+      card.setAttribute('data-emoji', val);
+
+      const inner = document.createElement('div');
+      inner.className = 'cardInner';
+      inner.setAttribute('role','button');
+      inner.setAttribute('tabindex','0');
+      inner.setAttribute('aria-label','face down card');
+
+      const front = document.createElement('div');
+      front.className = 'cardFace faceFront';
+      front.textContent = '❓';
+
+      const back = document.createElement('div');
+      back.className = 'cardFace faceBack';
+      back.textContent = val;
+
+      inner.appendChild(front);
+      inner.appendChild(back);
+      card.appendChild(inner);
+
+      inner.addEventListener('click', () => tryFlip(inner));
+      inner.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tryFlip(inner); }
+      });
+
+      board.appendChild(card);
+    });
+  }
+
+  function tryFlip(inner){
+    if (lock) return;
+    if (inner.classList.contains('flipped') || inner.classList.contains('matched')) return;
+
+    inner.classList.add('flipped');
+    playFlip();
+    flipped.push(inner);
+
+    if(flipped.length === 2){
+      lock = true;
+      setTimeout(checkMatch, 650);
+    }
+  }
+
+  function checkMatch(){
+    const [a,b] = flipped;
+    const valA = a.parentElement.getAttribute('data-emoji');
+    const valB = b.parentElement.getAttribute('data-emoji');
+
+    if(valA === valB){
+      a.classList.add('matched');
+      b.classList.add('matched');
+
+      const parentA = a.parentElement;
+      const parentB = b.parentElement;
+      if(playerTurn === 1){
+        parentA.style.background = 'linear-gradient(180deg, var(--player1), #ff9ea0)';
+        parentB.style.background = 'linear-gradient(180deg, var(--player1), #ff9ea0)';
+        score1++; score1El.textContent = 'Score: ' + score1;
+      } else {
+        parentA.style.background = 'linear-gradient(180deg, var(--player2), #80bfff)';
+        parentB.style.background = 'linear-gradient(180deg, var(--player2), #80bfff)';
+        score2++; score2El.textContent = 'Score: ' + score2;
+      }
+
+      parentA.classList.add('disabled');
+      parentB.classList.add('disabled');
+
+      matchedPairs++;
+      playMatch();
+
+      // player keeps turn on match
+    } else {
+      // not matched: flip back & switch turn
+      setTimeout(() => {
+        a.classList.remove('flipped');
+        b.classList.remove('flipped');
+      }, 150);
+      playerTurn = (playerTurn === 1) ? 2 : 1;
+      updateTurnUI();
+    }
+
+    flipped = [];
+    lock = false;
+
+    if(matchedPairs === EMOJIS.length){
+      setTimeout(() => {
+        playWin();
+        showResult();
+      }, 450);
+    }
+  }
+
+  function updateTurnUI(){
+    turnIndicator.textContent = 'Turn: Player ' + playerTurn;
+    if(playerTurn === 1){
+      turnIndicator.style.background = 'linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))';
+      turnIndicator.style.borderLeft = '6px solid var(--player1)';
+    } else {
+      turnIndicator.style.background = 'linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))';
+      turnIndicator.style.borderLeft = '6px solid var(--player2)';
+    }
+  }
+
+  function showResult(){
+    modal.classList.add('show');
+    let msg = '';
+    if(score1 > score2) msg = `${pdata.p1} (${pdata.r1}) wins! 🎉`;
+    else if(score2 > score1) msg = `${pdata.p2} (${pdata.r2}) wins! 🎉`;
+    else msg = `It's a tie! 🤝`;
+    modalMsg.textContent = msg + ` Final score — ${pdata.p1}: ${score1} • ${pdata.p2}: ${score2}`;
+  }
+
+  function resetGame(){
+    score1 = 0; score2 = 0; playerTurn = 1;
+    score1El.textContent = 'Score: 0';
+    score2El.textContent = 'Score: 0';
+    // reset styles on board
+    renderBoard();
+  }
+
+  // ui events
+  playAgain.addEventListener('click', () => {
+    modal.classList.remove('show');
+    resetGame();
+  });
+  closeModal.addEventListener('click', () => {
+    modal.classList.remove('show');
+  });
+  resetBtn.addEventListener('click', resetGame);
+
+  // init
+  renderBoard();
+})();
+</script>
+
+</body>
+</html>
+
